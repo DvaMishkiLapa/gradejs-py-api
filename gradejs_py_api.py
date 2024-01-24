@@ -1,7 +1,7 @@
 import asyncio
 import json
 from typing import Any, Dict
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 
 from aiohttp import ClientSession
 
@@ -47,14 +47,19 @@ class API:
         '''
         Getting information about the `package`
         '''
+        package_info = {
+            "0": {
+                "packageName": package
+            }
+        }
         return await self._do_request(
-            path=f'/client/getPackageInfo?batch={batch}&input=%7B%220%22%3A%7B%22packageName%22%3A%22{package}%22%7D%7D',
+            path=f'/client/getPackageInfo?batch={batch}&input=' + quote(json.dumps(package_info)),
             method='get'
         )
 
     async def getShowcase(self):
         return await self._do_request(
-            path=f'/client/getShowcase',
+            path='/client/getShowcase',
             method='get'
         )
 
@@ -70,10 +75,16 @@ async def main():
     url_example = 'https://github.com/'
     package_example = 'axios'
     api = API('https://api.gradejs.com')
-    print(f'Ping: {await api.ping()}\n')
-    print(f'URL Scan: {await api.getOrRequestWebPageScan(url_example)}\n')
-    print(f'Package Scan: {await api.getPackageInfo(package_example)}\n')
-    print(f'getShowcase: {await api.getShowcase()}')
+    print(f'Ping: {await api.ping()}')
+    with open('getOrRequestWebPageScan.json', 'w') as outfile:
+        print(f'getOrRequestWebPageScan for {url_example} writing...')
+        json.dump(await api.getOrRequestWebPageScan(url_example), outfile)
+    with open('getPackageInfo.json', 'w') as outfile:
+        print(f'getPackageInfo for {package_example} writing...')
+        json.dump(await api.getPackageInfo(package_example), outfile)
+    with open('getShowcase.json', 'w') as outfile:
+        print('getShowcase writing...')
+        json.dump(await api.getShowcase(), outfile)
     await api.close()
 
 
